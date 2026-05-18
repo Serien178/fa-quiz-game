@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>金融资产答题闯关</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f2f3f0;
+    color: #333;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 16px;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 420px;
+    min-height: 92vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ===== 页面容器 ===== */
+  .page { display: none; flex-direction: column; flex: 1; }
+  .page.active { display: flex; }
+
+  /* ===== 首页 ===== */
+  .home-header {
+    text-align: center;
+    padding: 32px 0 24px;
+  }
+  .home-header .icon {
+    font-size: 48px;
+    margin-bottom: 8px;
+  }
+  .home-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #2c3e2d;
+    letter-spacing: 1px;
+  }
+  .home-header .subtitle {
+    font-size: 13px;
+    color: #888;
+    margin-top: 4px;
+  }
+
+  .score-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px 20px;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    margin-bottom: 20px;
+  }
+  .score-card .label {
+    font-size: 14px;
+    color: #999;
+    margin-bottom: 6px;
+  }
+  .score-card .number {
+    font-size: 64px;
+    font-weight: 800;
+    color: #3b7a3f;
+    line-height: 1;
+  }
+  .score-card .unit {
+    font-size: 14px;
+    color: #999;
+    margin-top: 4px;
+  }
+
+  .round-history {
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    margin-bottom: 20px;
+  }
+  .round-history h3 {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .round-history .list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .round-history .tag {
+    background: #e8f5e9;
+    color: #3b7a3f;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+  }
+  .round-history .tag.perfect {
+    background: #c8e6c9;
+    font-weight: 600;
+  }
+  .round-history .empty {
+    color: #ccc;
+    font-size: 13px;
+  }
+
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: transform .15s, box-shadow .15s;
+    -webkit-appearance: none;
+  }
+  .btn:active { transform: scale(.97); }
+
+  .btn-primary {
+    background: #4a9b4e;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(74,155,78,.25);
+  }
+  .btn-primary:active { background: #3b7a3f; }
+
+  .btn-secondary {
+    background: #fff;
+    color: #4a9b4e;
+    border: 1.5px solid #4a9b4e;
+  }
+
+  .btn-small {
+    padding: 10px 20px;
+    font-size: 14px;
+    width: auto;
+    display: inline-block;
+  }
+
+  .home-footer {
+    text-align: center;
+    margin-top: auto;
+    padding: 20px 0;
+  }
+  .home-footer button { margin-bottom: 10px; }
+  .home-footer .hint {
+    font-size: 11px;
+    color: #bbb;
+    margin-top: 6px;
+  }
+
+  /* ===== 答题页 ===== */
+  .quiz-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0 16px;
+  }
+  .quiz-progress {
+    font-size: 13px;
+    color: #999;
+    font-weight: 500;
+  }
+  .quiz-progress span { color: #4a9b4e; font-weight: 700; }
+
+  .quiz-section-badge {
+    background: #e8f5e9;
+    color: #3b7a3f;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 10px;
+  }
+
+  .question-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    margin-bottom: 16px;
+  }
+  .question-card .q-text {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #333;
+    font-weight: 500;
+  }
+
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option {
+    background: #fff;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 12px;
+    padding: 15px 16px;
+    font-size: 15px;
+    color: #333;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all .2s;
+    -webkit-appearance: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .option:active { background: #f9f9f9; }
+  .option .prefix {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #888;
+    flex-shrink: 0;
+  }
+  .option.correct {
+    border-color: #4a9b4e;
+    background: #e8f5e9;
+  }
+  .option.correct .prefix {
+    background: #4a9b4e;
+    color: #fff;
+  }
+  .option.wrong {
+    border-color: #e57373;
+    background: #ffebee;
+  }
+  .option.wrong .prefix {
+    background: #e57373;
+    color: #fff;
+  }
+  .option.dim { opacity: .5; }
+  .option.disabled { pointer-events: none; }
+
+  .feedback {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.6;
+    display: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  }
+  .feedback.show { display: block; }
+  .feedback .fb-icon { font-size: 20px; margin-right: 4px; }
+  .feedback.correct-fb { border-left: 4px solid #4a9b4e; background: #f1f8e9; }
+  .feedback.wrong-fb { border-left: 4px solid #e57373; background: #fef3f2; }
+  .feedback .fb-title { font-weight: 700; margin-bottom: 4px; }
+  .feedback .fb-explain { color: #666; font-size: 13px; }
+
+  .quiz-next {
+    margin-top: 16px;
+    display: none;
+  }
+  .quiz-next.show { display: block; }
+
+  /* ===== 轮次结果页 ===== */
+  .result-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px 20px;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    margin-bottom: 16px;
+  }
+  .result-card .round-num { font-size: 14px; color: #999; }
+  .result-card .big-score {
+    font-size: 72px;
+    font-weight: 800;
+    color: #4a9b4e;
+    line-height: 1;
+    margin: 8px 0;
+  }
+  .result-card .frac { font-size: 16px; color: #666; }
+  .result-card .msg { font-size: 15px; margin-top: 8px; color: #333; font-weight: 500; }
+
+  .result-review {
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    margin-bottom: 16px;
+  }
+  .result-review h3 {
+    font-size: 14px; color: #888; margin-bottom: 10px; font-weight: 500;
+  }
+  .review-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 13px;
+    color: #666;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .review-item:last-child { border-bottom: none; }
+  .review-item .ri-icon { font-size: 16px; flex-shrink: 0; }
+  .review-item .ri-text { line-height: 1.5; }
+  .review-item .ri-text b { color: #333; }
+
+  .result-actions { display: flex; gap: 10px; margin-top: 4px; margin-bottom: 20px; }
+  .result-actions .btn { flex: 1; }
+
+  /* ===== 重置按钮 ===== */
+  .reset-area { text-align: center; padding: 10px 0 20px; }
+  .reset-link {
+    background: none; border: none;
+    font-size: 12px; color: #ccc; cursor: pointer;
+    padding: 8px;
+    -webkit-appearance: none;
+  }
+  .reset-link:active { color: #e57373; }
+
+  /* ===== 动画 ===== */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-in { animation: fadeIn .35s ease-out; }
+
+  @keyframes popIn {
+    0% { transform: scale(.6); opacity: 0; }
+    80% { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .pop-in { animation: popIn .4s ease-out; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  .float-anim { animation: float 2s ease-in-out infinite; }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  @keyframes scoreUp {
+    from { transform: scale(1); }
+    50% { transform: scale(1.15); color: #66bb6a; }
+    to { transform: scale(1); }
+  }
+  .score-bump { animation: scoreUp .5s ease-out; }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <!-- ==================== 首页 ==================== -->
+  <div class="page active" id="pageHome">
+    <div class="home-header">
+      <div class="icon float-anim">📋</div>
+      <h1>金融资产答题闯关</h1>
+      <div class="subtitle">中级财务会计 · 刘永泽</div>
+    </div>
+
+    <div class="score-card">
+      <div class="label">累计总分</div>
+      <div class="number" id="totalScore">0</div>
+      <div class="unit">分 · 无上限</div>
+    </div>
+
+    <div class="round-history">
+      <h3>本轮回顾</h3>
+      <div class="list" id="historyList">
+        <span class="empty">暂未答题，开始你的第一轮吧</span>
+      </div>
+    </div>
+
+    <div class="home-footer">
+      <button class="btn btn-primary" onclick="startRound()">开始新一轮（5题）</button>
+      <div class="hint">每轮5道题 · 答对+1分 · 答错显示解析</div>
+    </div>
+
+    <div class="reset-area">
+      <button class="reset-link" onclick="resetAll()">重置全部数据</button>
+    </div>
+  </div>
+
+  <!-- ==================== 答题页 ==================== -->
+  <div class="page" id="pageQuiz">
+    <div class="quiz-top">
+      <span class="quiz-progress">第 <span id="qIndex">1</span> / 5 题</span>
+      <span class="quiz-section-badge" id="qSection">金融资产概述</span>
+    </div>
+
+    <div class="question-card">
+      <div class="q-text" id="qText"></div>
+    </div>
+
+    <div class="options" id="optionsWrap"></div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="quiz-next" id="quizNext">
+      <button class="btn btn-primary" onclick="nextQuestion()" id="btnNext">下一题</button>
+    </div>
+  </div>
+
+  <!-- ==================== 轮次结果页 ==================== -->
+  <div class="page" id="pageResult">
+    <div class="result-card">
+      <div class="round-num" id="resultRoundNum">第 1 轮</div>
+      <div class="big-score pop-in" id="resultScore">0</div>
+      <div class="frac" id="resultFrac">/5</div>
+      <div class="msg" id="resultMsg"></div>
+    </div>
+
+    <div class="result-review" id="resultReview">
+      <h3>答题详情</h3>
+    </div>
+
+    <div class="result-actions">
+      <button class="btn btn-primary" onclick="startRound()">再来一轮</button>
+      <button class="btn btn-secondary" onclick="goHome()">返回首页</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== 题库 ====================
+const QUESTION_BANK = [
+  // ---- 第一节：金融资产概述 ----
+  {
+    section: "金融资产概述",
+    q: "下列各项中，不属于金融资产的是（）",
+    opts: ["库存现金", "应收账款", "长期股权投资", "预收账款"],
+    ans: 3,
+    exp: "预收账款属于金融负债，它体现的是企业向客户交付商品的义务，而非从其他方收取现金的权利。金融资产的核心特征是企业持有从其他方收取现金或其他金融资产的合同权利。"
+  },
+  {
+    section: "金融资产概述",
+    q: "企业取得金融资产时，应当按（）进行初始确认",
+    opts: ["历史成本", "公允价值", "可变现净值", "重置成本"],
+    ans: 1,
+    exp: "《企业会计准则第22号》规定，企业初始确认金融资产时，应当按照公允价值计量。支付的对价中包含的交易费用，则需根据具体分类决定是否计入初始确认金额。"
+  },
+  {
+    section: "金融资产概述",
+    q: "根据现行会计准则，金融资产分类的依据是（）",
+    opts: ["企业管理金融资产的业务模式和合同现金流量特征", "金融资产的流动性", "金融资产的持有期限", "金融资产的发行方性质"],
+    ans: 0,
+    exp: "CAS 22（修订后）要求企业根据"管理金融资产的业务模式"和"合同现金流量特征"两个标准，将金融资产分为三类：以摊余成本计量、以公允价值计量且其变动计入其他综合收益、以公允价值计量且其变动计入当期损益。"
+  },
+  {
+    section: "金融资产概述",
+    q: "当企业成为金融工具合同的一方时，应当（）",
+    opts: ["在实际收到现金时确认金融资产", "在合同签订并支付价款后确认金融资产", "确认一项金融资产或金融负债", "仅在资产负债表日确认金融资产"],
+    ans: 2,
+    exp: "金融资产和金融负债的确认时点为"企业成为金融工具合同的一方时"。这意味着合同权利或义务一经产生即应确认，而非等到现金实际收付。"
+  },
+  {
+    section: "金融资产概述",
+    q: "金融资产终止确认的条件是（）",
+    opts: ["金融资产已出售", "收取金融资产现金流量的合同权利终止", "金融资产的公允价值降为零", "企业决定不再持有该金融资产"],
+    ans: 1,
+    exp: "金融资产终止确认的核心条件是收取该金融资产现金流量的合同权利终止，或金融资产已转移且满足终止确认条件（如风险和报酬几乎全部转移）。仅仅决定不出售并不构成终止确认。"
+  },
+  {
+    section: "金融资产概述",
+    q: "下列各项中，属于衍生金融工具的是（）",
+    opts: ["应收账款", "持有至到期债券", "可转换债券中的转换权", "库存现金"],
+    ans: 2,
+    exp: "可转换债券中的转换权属于嵌入式衍生工具，其价值随标的权益工具价格变动而变动。应收账款、债券、库存现金均属于基础金融工具。"
+  },
+  {
+    section: "金融资产概述",
+    q: "关于金融资产与金融负债的区分，下列说法正确的是（）",
+    opts: ["企业持有的自身权益工具属于金融资产", "预收账款属于金融资产", "金融资产的本质是收取现金或其他金融资产的合同权利", "所有合同权利都属于金融资产"],
+    ans: 2,
+    exp: "金融资产的本质定义是企业持有的、从其他方收取现金或其他金融资产的合同权利。预收账款是交付义务而非收款权利，属于金融负债。企业持有的自身权益工具不属于金融资产。"
+  },
+
+  // ---- 第二节：FVTPL / 交易性金融资产 ----
+  {
+    section: "交易性金融资产",
+    q: "企业取得交易性金融资产时支付的交易费用，应当计入（）",
+    opts: ["交易性金融资产的初始成本", "管理费用", "投资收益（借方）", "财务费用"],
+    ans: 2,
+    exp: "交易性金融资产的交易费用直接计入当期损益（借记"投资收益"），不构成初始入账成本。这是其与持有至到期投资、可供出售金融资产在初始计量上的重要区别。"
+  },
+  {
+    section: "交易性金融资产",
+    q: "甲公司购入股票作为交易性金融资产，支付价款100万元（含已宣告未发放股利5万元），另付交易费用2万元。初始入账金额为（）",
+    opts: ["100万元", "102万元", "95万元", "98万元"],
+    ans: 2,
+    exp: "初始入账金额 = 实际支付价款100万 - 已宣告未发放股利5万 = 95万元。已宣告未发放股利单独确认为"应收股利"，交易费用2万元直接计入"投资收益"借方，均不计入初始成本。"
+  },
+  {
+    section: "交易性金融资产",
+    q: "交易性金融资产持有期间，被投资单位宣告发放现金股利时，应（）",
+    opts: ["冲减交易性金融资产账面价值", "确认为投资收益", "确认为其他综合收益", "确认为资本公积"],
+    ans: 1,
+    exp: "交易性金融资产持有期间取得的现金股利（或债券利息），应当确认为投资收益。这与可供出售金融资产的处理一致，但与长期股权投资的权益法核算不同。"
+  },
+  {
+    section: "交易性金融资产",
+    q: "资产负债表日，交易性金融资产公允价值高于账面价值的差额，应计入（）",
+    opts: ["投资收益", "公允价值变动损益", "其他综合收益", "资本公积"],
+    ans: 1,
+    exp: "交易性金融资产的公允价值变动计入"公允价值变动损益"，直接影响当期利润。这是交易性金融资产区别于可供出售金融资产的关键特征——后者的公允价值变动一般计入其他综合收益。"
+  },
+  {
+    section: "交易性金融资产",
+    q: "出售交易性金融资产时，处置价款与账面价值之间的差额应计入（）",
+    opts: ["公允价值变动损益", "资本公积", "投资收益", "营业外收入"],
+    ans: 2,
+    exp: "出售交易性金融资产的差额计入"投资收益"。同时，持有期间累计确认的"公允价值变动损益"无需在处置时转入投资收益（新准则下不再结转），这是近年准则修订的变化之一。"
+  },
+  {
+    section: "交易性金融资产",
+    q: "某交易性金融资产取得成本200万元，期末公允价值180万元，下期期末公允价值195万元。第二期应确认的公允价值变动损益为（）",
+    opts: ["-20万元", "+15万元", "-5万元", "+195万元"],
+    ans: 1,
+    exp: "第二期公允价值变动 = 第二期期末公允价值195万 - 第一期期末公允价值180万 = +15万元（收益）。累计公允价值变动 = 195万 - 200万 = -5万元。每期按期末与上期末的差额确认变动。"
+  },
+  {
+    section: "交易性金融资产",
+    q: "关于交易性金融资产的后续计量，下列说法正确的是（）",
+    opts: ["按摊余成本计量", "按公允价值计量，变动计入其他综合收益", "按公允价值计量，变动计入当期损益", "按成本与市价孰低计量"],
+    ans: 2,
+    exp: "交易性金融资产始终按公允价值进行后续计量，且公允价值变动计入当期损益（公允价值变动损益）。这与以摊余成本计量的金融资产和FVOCI类金融资产形成对照。"
+  },
+  {
+    section: "交易性金融资产",
+    q: "取得交易性金融资产时，已宣告但尚未发放的现金股利应当（）",
+    opts: ["计入交易性金融资产成本", "单独确认为应收股利", "冲减投资收益", "计入其他综合收益"],
+    ans: 1,
+    exp: "已宣告但尚未发放的现金股利（或已到付息期但尚未领取的利息）应单独确认为"应收股利"（或"应收利息"），不计入交易性金融资产的初始确认金额。这一点三类金融资产的处理是相同的。"
+  },
+
+  // ---- 第三节：持有至到期投资 / 摊余成本计量 ----
+  {
+    section: "持有至到期投资",
+    q: "持有至到期投资的初始确认金额包括（）",
+    opts: ["仅公允价值", "公允价值减去交易费用", "公允价值加上交易费用", "面值"],
+    ans: 2,
+    exp: "持有至到期投资（以摊余成本计量的金融资产）的初始确认金额 = 公允价值 + 相关交易费用。交易费用构成初始成本的一部分，这与交易性金融资产的处理截然不同。"
+  },
+  {
+    section: "持有至到期投资",
+    q: "企业购入面值100万元、票面利率5%的五年期债券，支付价款96万元，另付交易费用2万元，作为持有至到期投资。初始入账金额为（）",
+    opts: ["96万元", "100万元", "98万元", "102万元"],
+    ans: 2,
+    exp: "初始入账金额 = 支付价款96万 + 交易费用2万 = 98万元。债券按98万元的取得成本入账（折价购入），差额2万元（100万-98万）通过实际利率法在持有期间摊销。"
+  },
+  {
+    section: "持有至到期投资",
+    q: "实际利率法下，每期确认的投资收益等于（）",
+    opts: ["期初摊余成本 × 票面利率", "期初摊余成本 × 实际利率", "面值 × 票面利率", "公允价值变动"],
+    ans: 1,
+    exp: "实际利率法下，投资收益 = 期初摊余成本 × 实际利率。而应收利息 = 面值 × 票面利率。二者的差额即为本期摊销的折价或溢价金额，调整摊余成本。这是掌握摊余成本法的核心公式。"
+  },
+  {
+    section: "持有至到期投资",
+    q: "甲公司溢价购入债券作为持有至到期投资，面值100万元，购入成本110万元，实际利率3%，票面利率5%。第一年应确认的投资收益为（）",
+    opts: ["5万元", "3.3万元", "5.5万元", "3万元"],
+    ans: 1,
+    exp: "投资收益 = 期初摊余成本110万 × 实际利率3% = 3.3万元。应收利息 = 面值100万 × 票面利率5% = 5万元。差额1.7万元为溢价摊销额，摊余成本降至110-1.7=108.3万元。"
+  },
+  {
+    section: "持有至到期投资",
+    q: "不属于持有至到期投资基本特征的是（）",
+    opts: ["有固定或可确定的现金流量", "有固定到期日", "企业有随时出售的意图和能力", "企业有明确意图和能力持有至到期"],
+    ans: 2,
+    exp: "持有至到期投资的核心特征包括：有固定到期日、回收金额固定或可确定、企业有明确意图和能力持有至到期。"随时出售的意图"恰恰与之矛盾，具备该特征的金融资产应分类为交易性金融资产。"
+  },
+  {
+    section: "持有至到期投资",
+    q: "持有至到期投资发生减值时，应（）",
+    opts: ["不作处理，待处置时统一处理", "计提减值准备，计入资产减值损失", "冲减其他综合收益", "直接冲减投资成本"],
+    ans: 1,
+    exp: "持有至到期投资（以摊余成本计量的金融资产）发生减值时，应确认减值损失，借记"资产减值损失"，贷记"持有至到期投资减值准备"（或"债权投资减值准备"），即采用"预期信用损失模型"。"
+  },
+  {
+    section: "持有至到期投资",
+    q: "持有至到期投资重分类为可供出售金融资产时，重分类日公允价值与账面价值的差额应计入（）",
+    opts: ["投资收益", "公允价值变动损益", "其他综合收益", "资产减值损失"],
+    ans: 2,
+    exp: "持有至到期投资重分类为可供出售金融资产（FVOCI）时，重分类日公允价值与摊余成本之间的差额计入其他综合收益。这体现了重分类不影响当期损益的原则，差额先"挂"在权益中。"
+  },
+
+  // ---- 第四节：可供出售金融资产 / FVOCI ----
+  {
+    section: "可供出售金融资产",
+    q: "可供出售金融资产（权益工具）的初始确认金额包括（）",
+    opts: ["公允价值（不含交易费用）", "公允价值加交易费用", "面值", "购买价款减交易费用"],
+    ans: 1,
+    exp: "可供出售金融资产的初始确认金额 = 公允价值 + 相关交易费用。交易费用构成取得成本的一部分。这与交易性金融资产（交易费用计入当期损益）的处理不同，但与持有至到期投资一致。"
+  },
+  {
+    section: "可供出售金融资产",
+    q: "可供出售金融资产（权益工具）的公允价值变动，在持有期间应计入（）",
+    opts: ["投资收益", "公允价值变动损益", "其他综合收益", "资本公积"],
+    ans: 2,
+    exp: "可供出售金融资产（FVOCI-权益工具）的公允价值变动计入其他综合收益，不影响当期损益。这是其与交易性金融资产最核心的区别——同样的公允价值变动，列报位置完全不同。"
+  },
+  {
+    section: "可供出售金融资产",
+    q: "可供出售金融资产发生减值时，原计入其他综合收益的累计公允价值下降金额应当（）",
+    opts: ["继续留在其他综合收益中", "转入当期损益（资产减值损失）", "转入资本公积", "直接冲减留存收益"],
+    ans: 1,
+    exp: "可供出售金融资产发生减值时，原计入其他综合收益的累计损失应从其他综合收益中转出，计入当期损益（资产减值损失）。这是"其他综合收益"科目的"中转"机制——减值触发时将累计未实现损失转化为已实现损失。"
+  },
+  {
+    section: "可供出售金融资产",
+    q: "出售可供出售金融资产时，原计入其他综合收益的累计公允价值变动应当（）",
+    opts: ["保留在其他综合收益中", "转入投资收益", "转入公允价值变动损益", "转入留存收益"],
+    ans: 1,
+    exp: "处置可供出售金融资产时，原计入其他综合收益的累计利得或损失应从其他综合收益中转出，计入当期投资收益。这确保了持有期间的全部价值变动最终都体现在损益中。"
+  },
+  {
+    section: "可供出售金融资产",
+    q: "关于可供出售金融资产（债务工具）的减值，下列说法正确的是（）",
+    opts: ["减值损失一律不得转回", "减值损失可以通过损益转回", "减值损失只能通过其他综合收益转回", "减值损失转回时计入资本公积"],
+    ans: 1,
+    exp: "可供出售金融资产中的债务工具（FVOCI-债务工具），其减值损失在后续期间如果公允价值回升且客观上与减值发生后的事项有关，可以通过损益（资产减值损失）转回。但权益工具（FVOCI-权益工具）的减值损失不得通过损益转回。"
+  },
+  {
+    section: "可供出售金融资产",
+    q: "下列关于可供出售金融资产与交易性金融资产的对比，正确的是（）",
+    opts: ["两者的交易费用处理相同", "两者的公允价值变动均计入当期损益", "两者的公允价值变动列报位置不同，前者计入OCI，后者计入当期损益", "两者均按摊余成本进行后续计量"],
+    ans: 2,
+    exp: "核心区别：交易性金融资产的公允价值变动计入当期损益（公允价值变动损益），可供出售金融资产的公允价值变动计入其他综合收益（OCI）。此外，交易费用处理也不同——前者直接计入当期损益，后者构成初始成本。"
+  },
+  {
+    section: "可供出售金融资产",
+    q: "企业购入某上市公司股票，指定为以公允价值计量且其变动计入其他综合收益的金融资产。收到该股票发放的现金股利时，应（）",
+    opts: ["冲减金融资产账面价值", "确认为投资收益", "确认为其他综合收益", "冲减初始投资成本"],
+    ans: 1,
+    exp: "无论金融资产如何分类，被投资单位宣告发放的现金股利均应确认为投资收益。股利收入是已实现的回报，直接进入当期损益，不受金融资产分类的影响。"
+  },
+
+  // ---- 综合 / 计算 ----
+  {
+    section: "综合应用",
+    q: "企业折价购入债券作为以摊余成本计量的金融资产，持有期间摊余成本的变化趋势是（）",
+    opts: ["逐年减少直至等于面值", "逐年增加直至等于面值", "保持初始入账金额不变", "随市场利率波动"],
+    ans: 1,
+    exp: "折价购入时，初始摊余成本低于面值。在实际利率法下，每期投资收益（按期初摊余成本×实际利率计算）大于应收利息（按面值×票面利率计算），差额增加摊余成本，使其逐年上升，到期时恰好等于面值。溢价购入则相反。"
+  },
+  {
+    section: "综合应用",
+    q: "关于金融资产公允价值变动的列报，下列组合完全正确的是（）",
+    opts: ["交易性→OCI，可供出售→PL，持有至到期→不确认", "交易性→PL，可供出售→OCI，持有至到期→不确认（以摊余成本计量）", "交易性→OCI，可供出售→OCI，持有至到期→PL", "交易性→PL，可供出售→PL，持有至到期→OCI"],
+    ans: 1,
+    exp: "三分类下：FVTPL（交易性）公允价值变动→当期损益（PL）；FVOCI（可供出售）公允价值变动→其他综合收益（OCI）；AC（持有至到期/摊余成本）不确认公允价值变动，按摊余成本计量。这是三类金融资产后续计量的核心框架。"
+  },
+  {
+    section: "综合应用",
+    q: "企业在初始确认时，可以将非交易性权益工具投资指定为以公允价值计量且其变动计入其他综合收益的金融资产，该指定（）",
+    opts: ["可以随时撤销", "一经做出，不得撤销", "在资产负债表日可以重新评估", "每三年可变更一次"],
+    ans: 1,
+    exp: "根据CAS 22，企业将非交易性权益工具投资指定为FVOCI（即"其他权益工具投资"）的选择权，一经做出即不可撤销。这是为了限制企业通过重分类操纵利润——防止企业在股价上涨时转入损益、下跌时转入OCI。"
+  },
+  {
+    section: "综合应用",
+    q: "某金融资产的合同条款规定，其现金流量仅为对本金和以未偿付本金金额为基础的利息的支付。该特征被描述为（）",
+    opts: ["公允价值测试", "SPPI测试（仅含本金和利息的支付）", "业务模式测试", "流动性测试"],
+    ans: 1,
+    exp: "SPPI（Solely Payments of Principal and Interest）测试是判断金融资产合同现金流量特征的关键标准。通过SPPI测试的金融资产，才有资格根据业务模式分类为AC或FVOCI；未通过的，必须分类为FVTPL。"
+  }
+];
+
+// ==================== 游戏状态 ====================
+const STORAGE_KEY = 'fa_quiz_score';
+const HISTORY_KEY = 'fa_quiz_history';
+
+function loadTotalScore() {
+  return parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
+}
+function saveTotalScore(s) {
+  localStorage.setItem(STORAGE_KEY, s.toString());
+}
+function loadHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  } catch { return []; }
+}
+function saveHistory(h) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(-20))); // 保留最近20轮
+}
+
+let state = {
+  totalScore: 0,
+  history: [],
+  roundQuestions: [],      // 本轮5道题
+  currentIndex: 0,         // 当前第几题（0-4）
+  roundScore: 0,           // 本轮得分
+  answered: false,         // 当前题是否已作答
+  roundResults: []         // 本轮每题的作答详情
+};
+
+function initState() {
+  state.totalScore = loadTotalScore();
+  state.history = loadHistory();
+}
+
+// ==================== 页面切换 ====================
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const page = document.getElementById(id);
+  page.classList.add('active');
+  // 重新触发动画
+  page.querySelectorAll('.fade-in').forEach(el => {
+    el.classList.remove('fade-in');
+    void el.offsetWidth;
+    el.classList.add('fade-in');
+  });
+}
+
+// ==================== 首页 ====================
+function renderHome() {
+  document.getElementById('totalScore').textContent = state.totalScore;
+  const list = document.getElementById('historyList');
+  if (state.history.length === 0) {
+    list.innerHTML = '<span class="empty">暂未答题，开始你的第一轮吧</span>';
+  } else {
+    list.innerHTML = state.history.slice().reverse().map((s, i) => {
+      const cls = s === 5 ? 'tag perfect' : 'tag';
+      return `<span class="${cls}">第${state.history.length - i}轮: ${s}/5</span>`;
+    }).join('');
+  }
+}
+
+function goHome() {
+  showPage('pageHome');
+  renderHome();
+}
+
+// ==================== 开始新一轮 ====================
+function startRound() {
+  // 从题库随机抽5道（不重复）
+  const pool = [...QUESTION_BANK];
+  const selected = [];
+  for (let i = 0; i < 5; i++) {
+    const idx = Math.floor(Math.random() * pool.length);
+    selected.push(pool.splice(idx, 1)[0]);
+  }
+
+  state.roundQuestions = selected;
+  state.currentIndex = 0;
+  state.roundScore = 0;
+  state.answered = false;
+  state.roundResults = [];
+
+  showPage('pageQuiz');
+  renderQuestion();
+}
+
+// ==================== 渲染题目 ====================
+function renderQuestion() {
+  const qData = state.roundQuestions[state.currentIndex];
+  const isLast = state.currentIndex === 4;
+
+  document.getElementById('qIndex').textContent = state.currentIndex + 1;
+  document.getElementById('qSection').textContent = qData.section;
+  document.getElementById('qText').textContent = qData.q;
+  document.getElementById('btnNext').textContent = isLast ? '查看本轮结果' : '下一题';
+
+  const wrap = document.getElementById('optionsWrap');
+  const labels = ['A', 'B', 'C', 'D'];
+  wrap.innerHTML = qData.opts.map((opt, i) => `
+    <div class="option fade-in" data-idx="${i}" onclick="selectAnswer(${i})" style="animation-delay:${i * 0.06}s">
+      <span class="prefix">${labels[i]}</span>
+      <span>${opt}</span>
+    </div>
+  `).join('');
+
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').innerHTML = '';
+  document.getElementById('quizNext').classList.remove('show');
+  state.answered = false;
+}
+
+// ==================== 选择答案 ====================
+function selectAnswer(idx) {
+  if (state.answered) return;
+  state.answered = true;
+
+  const qData = state.roundQuestions[state.currentIndex];
+  const correct = qData.ans;
+  const isCorrect = idx === correct;
+  const options = document.querySelectorAll('#optionsWrap .option');
+
+  // 禁用所有选项
+  options.forEach(o => o.classList.add('disabled'));
+
+  // 高亮正确答案（始终绿色）
+  options[correct].classList.add('correct');
+
+  // 如果选错，高亮错误选项
+  if (!isCorrect) {
+    options[idx].classList.add('wrong');
+  }
+
+  // 其他选项变灰
+  options.forEach((o, i) => {
+    if (i !== correct && i !== idx) o.classList.add('dim');
+  });
+
+  // 计分
+  if (isCorrect) {
+    state.roundScore++;
+  }
+
+  // 显示反馈
+  const fb = document.getElementById('feedback');
+  if (isCorrect) {
+    fb.className = 'feedback correct-fb show fade-in';
+    fb.innerHTML = `
+      <div class="fb-title">✓ 回答正确！+1分</div>
+      <div class="fb-explain">${qData.exp}</div>
+    `;
+  } else {
+    fb.className = 'feedback wrong-fb show fade-in';
+    fb.innerHTML = `
+      <div class="fb-title">✗ 回答错误</div>
+      <div class="fb-explain">正确答案是 <b>${['A','B','C','D'][correct]}. ${qData.opts[correct]}</b><br>${qData.exp}</div>
+    `;
+  }
+
+  // 记录详情
+  state.roundResults.push({
+    q: qData.q,
+    opts: qData.opts,
+    correctIdx: correct,
+    userIdx: idx,
+    isCorrect: isCorrect,
+    exp: qData.exp
+  });
+
+  // 显示"下一题"按钮
+  document.getElementById('quizNext').classList.add('show');
+}
+
+// ==================== 下一题 / 结束本轮 ====================
+function nextQuestion() {
+  if (state.currentIndex < 4) {
+    state.currentIndex++;
+    state.answered = false;
+    renderQuestion();
+    // 滚动到顶部
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    finishRound();
+  }
+}
+
+// ==================== 结束本轮 ====================
+function finishRound() {
+  state.totalScore += state.roundScore;
+  state.history.push(state.roundScore);
+
+  saveTotalScore(state.totalScore);
+  saveHistory(state.history);
+
+  renderResult();
+  showPage('pageResult');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ==================== 渲染结果页 ====================
+function renderResult() {
+  const roundNum = state.history.length;
+  const rs = state.roundScore;
+
+  document.getElementById('resultRoundNum').textContent = `第 ${roundNum} 轮`;
+  document.getElementById('resultScore').textContent = rs;
+  document.getElementById('resultFrac').textContent = `/ 5 分`;
+
+  let msg = '';
+  if (rs === 5) msg = '满分通关！太厉害了！';
+  else if (rs >= 3) msg = '表现不错，继续加油！';
+  else msg = '再接再厉，多复习知识点哦~';
+  document.getElementById('resultMsg').textContent = msg;
+
+  const reviewWrap = document.getElementById('resultReview');
+  const labels = ['A', 'B', 'C', 'D'];
+  let itemsHtml = '<h3>答题详情</h3>';
+  state.roundResults.forEach((r, i) => {
+    const icon = r.isCorrect ? '✅' : '❌';
+    const correctLabel = labels[r.correctIdx];
+    itemsHtml += `
+      <div class="review-item">
+        <span class="ri-icon">${icon}</span>
+        <span class="ri-text">
+          <b>第${i+1}题</b> ${r.q}<br>
+          ${!r.isCorrect ? `<span style="color:#e57373">你的答案：${labels[r.userIdx]}. ${r.opts[r.userIdx]}</span><br>` : ''}
+          <span style="color:#4a9b4e">正确答案：${correctLabel}. ${r.opts[r.correctIdx]}</span>
+          <br><span style="color:#999;font-size:12px;">${r.exp}</span>
+        </span>
+      </div>
+    `;
+  });
+  reviewWrap.innerHTML = itemsHtml;
+}
+
+// ==================== 重置 ====================
+function resetAll() {
+  if (confirm('确定要重置全部数据吗？累计总分和答题记录将被清空。')) {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(HISTORY_KEY);
+    state.totalScore = 0;
+    state.history = [];
+    renderHome();
+  }
+}
+
+// ==================== 启动 ====================
+initState();
+renderHome();
+</script>
+</body>
+</html>
