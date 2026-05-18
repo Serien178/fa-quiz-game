@@ -1,3 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>金融资产答题闯关</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f2f3f0;
+    color: #333;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 16px;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 420px;
+    min-height: 92vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ===== 页面容器 ===== */
+  .page { display: none; flex-direction: column; flex: 1; }
+  .page.active { display: flex; }
+
+  /* ===== 首页 ===== */
+  .home-header {
+    text-align: center;
+    padding: 32px 0 24px;
+  }
+  .home-header .icon {
+    font-size: 48px;
+    margin-bottom: 8px;
+  }
+  .home-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #2c3e2d;
+    letter-spacing: 1px;
+  }
+  .home-header .subtitle {
+    font-size: 13px;
+    color: #888;
+    margin-top: 4px;
+  }
+
+  .score-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px 20px;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    margin-bottom: 20px;
+  }
+  .score-card .label {
+    font-size: 14px;
+    color: #999;
+    margin-bottom: 6px;
+  }
+  .score-card .number {
+    font-size: 64px;
+    font-weight: 800;
+    color: #3b7a3f;
+    line-height: 1;
+  }
+  .score-card .unit {
+    font-size: 14px;
+    color: #999;
+    margin-top: 4px;
+  }
+
+  .round-history {
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    margin-bottom: 20px;
+  }
+  .round-history h3 {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .round-history .list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .round-history .tag {
+    background: #e8f5e9;
+    color: #3b7a3f;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+  }
+  .round-history .tag.perfect {
+    background: #c8e6c9;
+    font-weight: 600;
+  }
+  .round-history .empty {
+    color: #ccc;
+    font-size: 13px;
+  }
+
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: transform .15s, box-shadow .15s;
+    -webkit-appearance: none;
+  }
+  .btn:active { transform: scale(.97); }
+
+  .btn-primary {
+    background: #4a9b4e;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(74,155,78,.25);
+  }
+  .btn-primary:active { background: #3b7a3f; }
+
+  .btn-secondary {
+    background: #fff;
+    color: #4a9b4e;
+    border: 1.5px solid #4a9b4e;
+  }
+
+  .btn-small {
+    padding: 10px 20px;
+    font-size: 14px;
+    width: auto;
+    display: inline-block;
+  }
+
+  .home-footer {
+    text-align: center;
+    margin-top: auto;
+    padding: 20px 0;
+  }
+  .home-footer button { margin-bottom: 10px; }
+  .home-footer .hint {
+    font-size: 11px;
+    color: #bbb;
+    margin-top: 6px;
+  }
+
+  /* ===== 答题页 ===== */
+  .quiz-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0 16px;
+  }
+  .quiz-progress {
+    font-size: 13px;
+    color: #999;
+    font-weight: 500;
+  }
+  .quiz-progress span { color: #4a9b4e; font-weight: 700; }
+
+  .quiz-section-badge {
+    background: #e8f5e9;
+    color: #3b7a3f;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 10px;
+  }
+
+  .question-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    margin-bottom: 16px;
+  }
+  .question-card .q-text {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #333;
+    font-weight: 500;
+  }
+
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option {
+    background: #fff;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 12px;
+    padding: 15px 16px;
+    font-size: 15px;
+    color: #333;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all .2s;
+    -webkit-appearance: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .option:active { background: #f9f9f9; }
+  .option .prefix {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #888;
+    flex-shrink: 0;
+  }
+  .option.correct {
+    border-color: #4a9b4e;
+    background: #e8f5e9;
+  }
+  .option.correct .prefix {
+    background: #4a9b4e;
+    color: #fff;
+  }
+  .option.wrong {
+    border-color: #e57373;
+    background: #ffebee;
+  }
+  .option.wrong .prefix {
+    background: #e57373;
+    color: #fff;
+  }
+  .option.dim { opacity: .5; }
+  .option.disabled { pointer-events: none; }
+
+  .feedback {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.6;
+    display: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  }
+  .feedback.show { display: block; }
+  .feedback .fb-icon { font-size: 20px; margin-right: 4px; }
+  .feedback.correct-fb { border-left: 4px solid #4a9b4e; background: #f1f8e9; }
+  .feedback.wrong-fb { border-left: 4px solid #e57373; background: #fef3f2; }
+  .feedback .fb-title { font-weight: 700; margin-bottom: 4px; }
+  .feedback .fb-explain { color: #666; font-size: 13px; }
+
+  .quiz-next {
+    margin-top: 16px;
+    display: none;
+  }
+  .quiz-next.show { display: block; }
+
+  /* ===== 轮次结果页 ===== */
+  .result-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px 20px;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    margin-bottom: 16px;
+  }
+  .result-card .round-num { font-size: 14px; color: #999; }
+  .result-card .big-score {
+    font-size: 72px;
+    font-weight: 800;
+    color: #4a9b4e;
+    line-height: 1;
+    margin: 8px 0;
+  }
+  .result-card .frac { font-size: 16px; color: #666; }
+  .result-card .msg { font-size: 15px; margin-top: 8px; color: #333; font-weight: 500; }
+
+  .result-review {
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    margin-bottom: 16px;
+  }
+  .result-review h3 {
+    font-size: 14px; color: #888; margin-bottom: 10px; font-weight: 500;
+  }
+  .review-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 13px;
+    color: #666;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .review-item:last-child { border-bottom: none; }
+  .review-item .ri-icon { font-size: 16px; flex-shrink: 0; }
+  .review-item .ri-text { line-height: 1.5; }
+  .review-item .ri-text b { color: #333; }
+
+  .result-actions { display: flex; gap: 10px; margin-top: 4px; margin-bottom: 20px; }
+  .result-actions .btn { flex: 1; }
+
+  /* ===== 重置按钮 ===== */
+  .reset-area { text-align: center; padding: 10px 0 20px; }
+  .reset-link {
+    background: none; border: none;
+    font-size: 12px; color: #ccc; cursor: pointer;
+    padding: 8px;
+    -webkit-appearance: none;
+  }
+  .reset-link:active { color: #e57373; }
+
+  /* ===== 动画 ===== */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-in { animation: fadeIn .35s ease-out; }
+
+  @keyframes popIn {
+    0% { transform: scale(.6); opacity: 0; }
+    80% { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .pop-in { animation: popIn .4s ease-out; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  .float-anim { animation: float 2s ease-in-out infinite; }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  @keyframes scoreUp {
+    from { transform: scale(1); }
+    50% { transform: scale(1.15); color: #66bb6a; }
+    to { transform: scale(1); }
+  }
+  .score-bump { animation: scoreUp .5s ease-out; }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <!-- ==================== 首页 ==================== -->
+  <div class="page active" id="pageHome">
+    <div class="home-header">
+      <div class="icon float-anim">📋</div>
+      <h1>金融资产答题闯关</h1>
+      <div class="subtitle">中级财务会计 · 刘永泽</div>
+    </div>
+
+    <div class="score-card">
+      <div class="label">累计总分</div>
+      <div class="number" id="totalScore">0</div>
+      <div class="unit">分 · 无上限</div>
+    </div>
+
+    <div class="round-history">
+      <h3>本轮回顾</h3>
+      <div class="list" id="historyList">
+        <span class="empty">暂未答题，开始你的第一轮吧</span>
+      </div>
+    </div>
+
+    <div class="home-footer">
+      <button class="btn btn-primary" onclick="startRound()">开始新一轮（5题）</button>
+      <div class="hint">每轮5道题 · 答对+1分 · 答错显示解析</div>
+    </div>
+
+    <div class="reset-area">
+      <button class="reset-link" onclick="resetAll()">重置全部数据</button>
+    </div>
+  </div>
+
+  <!-- ==================== 答题页 ==================== -->
+  <div class="page" id="pageQuiz">
+    <div class="quiz-top">
+      <span class="quiz-progress">第 <span id="qIndex">1</span> / 5 题</span>
+      <span class="quiz-section-badge" id="qSection">金融资产概述</span>
+    </div>
+
+    <div class="question-card">
+      <div class="q-text" id="qText"></div>
+    </div>
+
+    <div class="options" id="optionsWrap"></div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="quiz-next" id="quizNext">
+      <button class="btn btn-primary" onclick="nextQuestion()" id="btnNext">下一题</button>
+    </div>
+  </div>
+
+  <!-- ==================== 轮次结果页 ==================== -->
+  <div class="page" id="pageResult">
+    <div class="result-card">
+      <div class="round-num" id="resultRoundNum">第 1 轮</div>
+      <div class="big-score pop-in" id="resultScore">0</div>
+      <div class="frac" id="resultFrac">/5</div>
+      <div class="msg" id="resultMsg"></div>
+    </div>
+
+    <div class="result-review" id="resultReview">
+      <h3>答题详情</h3>
+    </div>
+
+    <div class="result-actions">
+      <button class="btn btn-primary" onclick="startRound()">再来一轮</button>
+      <button class="btn btn-secondary" onclick="goHome()">返回首页</button>
+    </div>
+  </div>
+</div>
+
 <script>
 
 // ==================== 题库 ====================
@@ -494,3 +930,5 @@ initState();
 renderHome();
 
 </script>
+</body>
+</html>
